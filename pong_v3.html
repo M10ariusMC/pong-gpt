@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Pong IA Facile Ultra</title>
+<style>
+body { background:#000; margin:0; display:flex; justify-content:center; align-items:center; height:100vh; font-family:Arial,sans-serif; color:white; overflow:hidden; }
+canvas { background:#111; display:block; box-shadow:0 0 20px #fff; }
+#menu { position:absolute; text-align:center; top:20%; width:100%; }
+.btn { background:#222; border:2px solid #fff; padding:10px 20px; margin:10px; color:white; font-size:20px; cursor:pointer; transition:0.2s; }
+.btn:hover { background:#fff; color:#222; }
+</style>
+</head>
+<body>
+<div id="menu">
+    <h1>Pong IA par Niveau</h1>
+    <p>Choisis la difficulté :</p>
+    <button class="btn" onclick="startGame('easy')">Facile</button>
+    <button class="btn" onclick="startGame('medium')">Moyen</button>
+    <button class="btn" onclick="startGame('hard')">Difficile</button>
+</div>
+<canvas id="pong" width="800" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("pong");
+const ctx = canvas.getContext("2d");
+
+let gameStarted = false;
+let gameOver = false;
+let aiDifficulty = 'medium';
+
+const ball = { x:canvas.width/2, y:canvas.height/2, radius:10, speed:5, dx:5, dy:5, color:"white", trail:[] };
+
+const paddleWidth = 10;
+const paddleHeight = 100;
+const player = { x:0, y:canvas.height/2 - paddleHeight/2, width:paddleWidth, height:paddleHeight, dy:0, speed:6, score:0, glow:false };
+const ai = { x:canvas.width - paddleWidth, y:canvas.height/2 - paddleHeight/2, width:paddleWidth, height:paddleHeight, speed:2, score:0, glow:false };
+
+const bounceSound = new Audio("https://freesound.org/data/previews/341/341695_3248244-lq.mp3");
+const scoreSound = new Audio("https://freesound.org/data/previews/66/66717_931655-lq.mp3");
+const wallSound = new Audio("https://freesound.org/data/previews/274/274178_5121236-lq.mp3");
+
+function randomColor(){ return `hsl(${Math.random()*360},100%,70%)`; }
+function drawRect(x,y,w,h,color,glow=false){ ctx.fillStyle=color; ctx.shadowColor = glow?"#fff":color; ctx.shadowBlur=glow?15:0; ctx.fillRect(x,y,w,h); ctx.shadowBlur=0; }
+function drawCircle(x,y,r,color){ ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.closePath(); ctx.fill(); }
+function drawText(text,x,y){ ctx.fillStyle="white"; ctx.font="28px Arial"; ctx.fillText(text,x,y); }
+function drawSpeed(){ drawText(`Vitesse: ${ball.speed.toFixed(1)}`, canvas.width/2 - 60, 30); }
+
+function resetBall(){
+    ball.x = canvas.width/2; ball.y = canvas.height/2; ball.speed=5;
+    ball.dx = 5*(Math.random()>0.5?1:-1);
+    ball.dy = 5*(Math.random()>0.5?1:-1);
+    ball.color="white"; ball.trail=[];
+}
+
+function startGame(difficulty){
+    aiDifficulty=difficulty;
+    const speeds={easy:2, medium:5, hard:8};
+    ai.speed=speeds[difficulty];
+    document.getElementById("menu").style.display="none";
+    gameStarted=true; gameOver=false; player.score=0; ai.score=0;
+    resetBall();
+}
+
+function predictBallYPerfect(){
+    let x=ball.x, y=ball.y, dx=ball.dx, dy=ball.dy;
+    while(dx>0 && x<ai.x){
+        x+=dx;
+        y+=dy;
+        if(y+ball.radius>canvas.height || y-ball.radius<0) dy=-dy;
+    }
+    return y - ai.height/2;
+}
+
+function predictBallYMedium(){
+    if(ball.y>ai.y + ai.height/2) return ai.y + ai.speed;
+    else return ai.y - ai.speed;
+}
+
+// Ultra facile : déplacement aléatoire lent
+let easyMoveTimer = 0;
+let easyDirection = 0;
+
+function update(){
+    if(!gameStarted || gameOver) return;
+
+    ball.x += ball.dx; ball.y += ball.dy;
+
+    ball.trail.push({x:ball.x, y:ball.y, color:ball.color});
+    if(ball.trail.length>15) ball.trail.shift();
+
+    if(ball.y+ball.radius>canvas.height || ball.y-ball.radius<0){ ball.dy=-ball.dy; ball.color=randomColor(); wallSound.play(); }
+
+    player.glow=false; ai.glow=false;
+    if(ball.x-ball.radius<player.x+player.width && ball.y>player.y && ball.y<player.y+player.height){
+        ball.dx=-ball.dx; ball.speed+=0.5;
+        ball.dx=(ball.dx>0?1:-1)*ball.speed; ball.dy=(ball.dy>0?1:-1)*ball.speed; ball.color=randomColor(); player.glow=true; bounceSound.play();
+    }
+    if(ball.x+ball.radius>ai.x && ball.y>ai.y && ball.y<ai.y+ai.height){
+        ball.dx=-ball.dx; ball.speed+=0.5;
+        ball.dx=(ball.dx>0?1:-1)*ball.speed; ball.dy=(ball.dy>0?1:-1)*ball.speed; ball.color=randomColor(); ai.glow=true; bounceSound.play();
+    }
+
+    if(ball.x<0){ ai.score++; scoreSound.play(); resetBall(); }
+    if(ball.x>canvas.width){ player.score++; scoreSound.play(); resetBall(); }
+
+    if(player.score>=5 || ai.score>=5){ gameOver=true; gameStarted=false; document.getElementById("menu").style.display="block"; }
+
+    player.y += player.dy;
+    if(player.y<0) player.y=0; if(player.y+player.height>canvas.height) player.y=canvas.height-player.height;
+
+    // IA par niveau
+    if(aiDifficulty==='easy'){
+        // Ultra facile : IA se déplace lentement aléatoirement
+        easyMoveTimer--;
+        if(easyMoveTimer<=0){
+            easyDirection = (Math.random()-0.5)*ai.speed*2; // mouvement vertical aléatoire
+            easyMoveTimer = 60 + Math.floor(Math.random()*60);
+        }
+        ai.y += easyDirection;
+    }
+    else if(aiDifficulty==='medium'){
+        const targetY = predictBallYMedium();
+        if(targetY>ai.y) ai.y+=Math.min(ai.speed,targetY-ai.y);
+        else ai.y-=Math.min(ai.speed,ai.y-targetY);
+    }
+    else if(aiDifficulty==='hard'){
+        const targetY = predictBallYPerfect();
+        if(targetY>ai.y) ai.y+=Math.min(ai.speed,targetY-ai.y);
+        else ai.y-=Math.min(ai.speed,ai.y-targetY);
+    }
+    if(ai.y<0) ai.y=0; if(ai.y+ai.height>canvas.height) ai.y=canvas.height-ai.height;
+}
+
+function draw(){
+    ctx.fillStyle="#111"; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    for(let i=0;i<ball.trail.length;i++){
+        const t=ball.trail[i];
+        ctx.globalAlpha=i/ball.trail.length*0.5;
+        drawCircle(t.x,t.y,ball.radius,t.color);
+    }
+    ctx.globalAlpha=1;
+
+    drawRect(player.x,player.y,player.width,player.height,"#0f0",player.glow);
+    drawRect(ai.x,ai.y,ai.width,ai.height,"#f00",ai.glow);
+    drawCircle(ball.x,ball.y,ball.radius,ball.color);
+
+    drawText(player.score, canvas.width/4,50);
+    drawText(ai.score, canvas.width*3/4,50);
+    drawSpeed();
+}
+
+document.addEventListener("keydown", e=>{ if(e.key==="ArrowUp") player.dy=-player.speed; if(e.key==="ArrowDown") player.dy=player.speed; });
+document.addEventListener("keyup", e=>{ if(e.key==="ArrowUp"||e.key==="ArrowDown") player.dy=0; });
+
+function gameLoop(){ update(); draw(); requestAnimationFrame(gameLoop); }
+gameLoop();
+</script>
+</body>
+</html>
+
+
+
+
+
+

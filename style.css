@@ -1,0 +1,151 @@
+html, body {
+  margin: 0;
+  font-family: 'Press Start 2P', cursive;
+  background: #000;
+  color: #fff;
+  overflow-x: hidden;
+}
+
+/* Navbar fixe */
+nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: rgba(0,0,0,0.8);
+  padding: 10px 0;
+  text-align: center;
+  z-index: 10;
+}
+nav .btn { margin: 0 10px; }
+
+/* Header */
+header {
+  text-align: center;
+  padding: 120px 20px 40px 20px;
+}
+
+h1 {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 2.5em;
+  background: linear-gradient(90deg, #0ff, #f0f);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 10px #0ff, 0 0 20px #f0f;
+  margin-bottom: 10px;
+}
+
+p.intro {
+  font-size: 0.9em;
+  max-width: 700px;
+  margin: 0 auto 40px auto;
+  color: #ccc;
+  text-align: center;
+}
+
+.pong-screenshot {
+  display: block;
+  margin: 0 auto 40px auto;
+  max-width: 90%;
+  border: 3px solid #0ff;
+  border-radius: 10px;
+  box-shadow: 0 0 20px #0ff;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.pong-screenshot:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px #0ff;
+}
+
+/* Download buttons */
+.download-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.btn {
+  background: #000;
+  border: 2px solid #0ff;
+  color: #0ff;
+  padding: 15px 30px;
+  font-size: 0.8em;
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: 0.3s;
+  text-align: center;
+  display: inline-block;
+  position: relative;
+}
+
+.btn:hover {
+  background: #0ff;
+  color: #000;
+  box-shadow: 0 0 20px #0ff;
+  transform: scale(1.05);
+}
+
+/* Sections */
+section {
+  max-width: 800px;
+  margin: 0 auto 50px auto;
+  padding: 0 20px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: 0.6s ease-out;
+}
+
+section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+section h2 {
+  color: #f0f;
+  text-shadow: 0 0 10px #f0f;
+  margin-bottom: 20px;
+}
+
+section p {
+  font-size: 0.75em;
+  color: #ccc;
+  line-height: 1.4em;
+}
+
+footer {
+  text-align: center;
+  font-size: 0.6em;
+  color: #888;
+  padding-bottom: 20px;
+}
+
+/* Ball & Particles */
+#ball {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0ff;
+  top: 50px;
+  left: 50px;
+  box-shadow: 0 0 10px #0ff;
+  z-index: -1;
+}
+canvas#bgCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -2;
+}
+
+/* Responsive */
+@media(max-width:600px){
+  h1 { font-size: 1.8em; }
+  .btn { font-size:0.7em; padding:10px 20px; }
+  .pong-screenshot { max-width:100%; }
+  header { padding-top:100px; }
+}
+
